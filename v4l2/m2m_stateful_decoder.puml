@@ -1,0 +1,68 @@
+@startuml
+
+actor Client
+participant "V4L2 M2M Framework" as V4L2
+participant "Decoder (OUTPUT)" as DecoderOutput
+participant "Decoder (CAPTURE)" as DecoderCapture
+
+== Initialization ==
+
+Client -> V4L2: VIDIOC_ENUM_FMT() on OUTPUT
+V4L2 --> Client: List of supported coded formats
+
+Client -> V4L2: VIDIOC_ENUM_FMT() on CAPTURE
+V4L2 --> Client: List of supported raw formats for current OUTPUT format
+
+Client -> V4L2: VIDIOC_S_FMT() on OUTPUT
+V4L2 --> Client: Set OUTPUT format
+
+Client -> V4L2: VIDIOC_REQBUFS() on OUTPUT
+V4L2 --> Client: Allocate source buffers
+
+Client -> V4L2: VIDIOC_STREAMON() on OUTPUT
+V4L2 --> Client: Start streaming on OUTPUT
+
+Client -> V4L2: VIDIOC_S_FMT() on CAPTURE
+V4L2 --> Client: Set CAPTURE format
+
+Client -> V4L2: VIDIOC_REQBUFS() on CAPTURE
+V4L2 --> Client: Allocate CAPTURE buffers
+
+Client -> V4L2: VIDIOC_STREAMON() on CAPTURE
+V4L2 --> Client: Start streaming on CAPTURE
+
+== Capture Setup ==
+
+Client -> V4L2: VIDIOC_G_FMT() on CAPTURE
+V4L2 --> Client: Get CAPTURE format
+
+... Additional steps ...
+
+== Decoding ==
+
+Client -> V4L2: VIDIOC_QBUF() on OUTPUT
+V4L2 --> Client: Queue source buffer to OUTPUT
+
+Client -> V4L2: VIDIOC_DQBUF() on CAPTURE
+V4L2 --> Client: Dequeue CAPTURE buffer
+
+... Additional steps ...
+
+== Dynamic Resolution Change ==
+
+Client -> V4L2: Check for V4L2_EVENT_SOURCE_CHANGE
+V4L2 --> Client: V4L2_EVENT_SOURCE_CHANGE event detected
+
+Client -> V4L2: VIDIOC_DQEVENT() on CAPTURE
+V4L2 --> Client: Dequeue source change event
+
+... Additional steps ...
+
+== Drain ==
+
+Client -> V4L2: VIDIOC_DECODER_CMD() (V4L2_DEC_CMD_STOP)
+V4L2 --> Client: Initiate drain sequence
+
+... Additional steps ...
+
+@enduml
